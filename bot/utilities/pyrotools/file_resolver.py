@@ -67,13 +67,19 @@ class SendMedia:
             UnsupportedFileError: If the file type is unsupported.
         """
 
-        caption = "" if options.settings.CUSTOM_CAPTION == 0 else str(options.settings.CUSTOM_CAPTION)
+        custom_caption = options.settings.CUSTOM_CAPTION
         if options.settings.BACKUP_FILES:
             get_file = await client.get_messages(chat_id=file_origin, message_ids=file_data.message_id)
             if not getattr(get_file, "empty", False):
+                copy_kwargs: dict[str, Any] = {
+                    "chat_id": chat_id,
+                    "protect_content": protect_content,
+                }
+                if custom_caption != 0:
+                    copy_kwargs["caption"] = str(custom_caption)
                 return cast(
                     "Message",
-                    await get_file.copy(chat_id=chat_id, caption=caption, protect_content=protect_content),  # pyright: ignore[reportCallIssue]
+                    await get_file.copy(**copy_kwargs),  # pyright: ignore[reportCallIssue]
                 )
 
         file_type_data = FileId.decode(file_id=file_data.file_id)
